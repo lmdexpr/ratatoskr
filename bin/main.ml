@@ -1,4 +1,4 @@
-pen Async
+open Async
 open Core
 open Disml
 open Models
@@ -10,16 +10,17 @@ let help message =
   let summary     = String.concat ~sep:"\n" [ping_help; encode_help; help_text]
   in Message.reply message summary >>> ignore
 
-let encode _message _args = ()
+let encode encoder message =
+  Sys.command encoder >>> Message.reply message "ok !" >>> ignore
 
-let check_command drive_path (message:Message.t) =
-  let cmd, rest =
+let check_command encoder (message:Message.t) =
+  let cmd, _rest =
     match String.split ~on:' ' message.content with
     | hd::tl -> hd, tl
     | [] -> "", []
   in match cmd with
     | "!ping"   -> Message.reply message "Pong!" >>> ignore
-    | "!encode" -> encode drive_path message rest
+    | "!encode" -> encode encoder message
     | "!help"   -> help message
     | _         -> ()
 
@@ -29,14 +30,14 @@ let setup_logger () =
 
 let main () =
   setup_logger ();
-  let drive_path =
-    match Sys.getenv "DRIVE_PATH" with
-    | Some path -> path
-    | None-> failwith "No drive path in env"
+  let encode_command =
+    match Sys.getenv "RATATOSKR_ENCODER"
+    | Some ec -> ec
+    | None    -> failwith "No encoder in env"
   in
-    Client.message_create := check_command drive_path;
+    Client.message_create := check_command encode_command;
   let token =
-    match Sys.getenv "DISCORD_TOKEN" with
+    match Sys.getenv "RATATOSKR_DISCORD_TOKEN" with
     | Some t -> t
     | None -> failwith "No token in env"
   in
