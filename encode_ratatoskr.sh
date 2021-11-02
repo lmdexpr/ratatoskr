@@ -6,11 +6,12 @@ TMP_DIR=/tmp/ratatoskr
 mkdir -p $TMP_DIR
 
 for z in $working_directory/*.zip; do
-  name=${z%.*}
+  basename=${z##*/}
+  name=${basename%.*}
   dirname=$TMP_DIR/$name
 
   mkdir -p $dirname
-  mv $z $dirname
+  cp -r $z $dirname
   cd $dirname 
 
   unzip -j $z "*.flac"
@@ -25,6 +26,8 @@ for z in $working_directory/*.zip; do
   if test $count -gt 1; then
     cmd="ffmpeg $input -filter_complex amix=inputs=$count:duration=longest -ab 32k -acodec libmp3lame -f mp3 ${RATATOSKR_PATH}/output/$name.mp3";
     eval $cmd;
+
+    rm -rf $z
   fi
 done
 

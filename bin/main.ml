@@ -4,14 +4,16 @@ open Disml
 open Models
 
 let help message =
-  let help_text   = "!help : show this help."
+  let title       = "I'm ratatoskr running up and down the yggdrasill !" 
+  and help_text   = "!help : show this help."
   and ping_help   = "!ping : replied Pong!"
   and encode_help = "!encode : encode ratatoskr/workspace/<name>.zip (included *.flac files) to a ratatoskr/output/<name>.mp3 file. And, delete all zip files." in
-  let summary     = String.concat ~sep:"\n" [ping_help; encode_help; help_text]
+  let summary     = String.concat ~sep:"\n" [title; ping_help; encode_help; help_text]
   in Message.reply message summary >>> ignore
 
 let encode encoder message =
-  Sys.command encoder >>> Message.reply message "ok !" >>> ignore
+  let _ = Sys.command encoder
+  in Message.reply message "ok !" >>> ignore
 
 let check_command encoder (message:Message.t) =
   let cmd, _rest =
@@ -31,7 +33,7 @@ let setup_logger () =
 let main () =
   setup_logger ();
   let encode_command =
-    match Sys.getenv "RATATOSKR_ENCODER"
+    match Sys.getenv "RATATOSKR_ENCODER" with
     | Some ec -> ec
     | None    -> failwith "No encoder in env"
   in
