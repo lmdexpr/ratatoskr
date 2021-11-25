@@ -1,5 +1,7 @@
 #!/bin/bash
 
+whoami
+
 working_directory=${RATATOSKR_PATH}/workspace
 
 TMP_DIR=/tmp/ratatoskr

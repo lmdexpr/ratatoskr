@@ -22,6 +22,7 @@ let check_command encoder (message:Message.t) =
     | [] -> "", []
   in match cmd with
     | "!ping"   -> Message.reply message "Pong!" >>> ignore
+    | "kawaii"  -> Message.reply message "せやろ" >>> ignore
     | "!encode" -> encode encoder message
     | "!help"   -> help message
     | _         -> ()
