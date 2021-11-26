@@ -21,33 +21,35 @@ let encode () =
     | Some path -> path
     | None      -> failwith "No ratatoskr path in env"
   in
+  let ratatoskr_workspace = Filename.concat ratatoskr_dir "workspace" in
 
   let inner zip_full_path =
     let name    = Filename.basename zip_full_path |> Filename.chop_extension in
-    let dirname = Filename.concat tmp_dir name in
+    let tmp_dir = Filename.concat tmp_dir name in
     let _ = begin
-      Unix.mkdir_p dirname;
-      Sys.chdir dirname;
+      print_endline zip_full_path;
+      print_endline tmp_dir;
+      Unix.mkdir_p tmp_dir;
+      Sys.chdir tmp_dir;
       Sys.command ("unzip -j " ^ zip_full_path ^ " \"*.flac\"")
     end in
 
-    let flacs      = Sys.readdir dirname |> Array.filter ~f:(check_extension "flac") in
+    let flacs      = Sys.readdir tmp_dir |> Array.filter ~f:(check_extension "flac") in
     let count      = Array.length flacs in
     let inputs     = Array.map ~f:(fun flac -> "-i " ^ flac) flacs |> String.concat_array ~sep:" " in
     let name_mp3   = ratatoskr_dir ^ "output/" ^ name ^ ".mp3" in
     let ffmpeg_cmd = "ffmpeg " ^ inputs ^ " -filter_complex amix=inputs=" ^ (string_of_int count) ^ ":duration=longest -ab 32k -acodec libmp3lame -f mp3 " ^ name_mp3 in begin
       if count > 1 then begin
         print_endline ffmpeg_cmd;
-        (*
-        Sys.exec ~prog:ffmpeg_cmd;
-        Sys.remove zip_full_path
-        *)
+        let _ = Sys.command ffmpeg_cmd in (); 
+        Unix.remove zip_full_path
       end;
-      Sys.remove dirname
+      let _ = Sys.command ("rm -rf " ^ tmp_dir) in ()
     end
   in begin
+    print_endline tmp_dir;
     Unix.mkdir_p tmp_dir;
-    Sys.readdir ratatoskr_dir |> Array.filter ~f:(check_extension "zip") |> Array.iter ~f:inner
+    Sys.readdir ratatoskr_workspace |> Array.filter ~f:(check_extension "zip") |> Array.map ~f:(Filename.concat ratatoskr_workspace) |> Array.iter ~f:inner
   end
 
 let check_command (message:Message.t) =
@@ -59,7 +61,7 @@ let check_command (message:Message.t) =
     match cmd with
     | "!ping"   -> Message.reply message "Pong!" >>> ignore
     | "kawaii"  -> Message.reply message "せやろ" >>> ignore
-    | "!encode" ->encode (); Message.reply message"ok !" >>> ignore
+    | "!encode" -> encode (); Message.reply message"ok !" >>> ignore
     | "!help"   -> help message >>> ignore
     | _         -> ()
 
