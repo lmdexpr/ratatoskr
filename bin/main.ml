@@ -37,14 +37,15 @@ let encode () =
     let flacs      = Sys.readdir tmp_dir |> Array.filter ~f:(check_extension "flac") in
     let count      = Array.length flacs in
     let inputs     = Array.map ~f:(fun flac -> "-i " ^ flac) flacs |> String.concat_array ~sep:" " in
-    let name_mp3   = ratatoskr_dir ^ "/output/" ^ name ^ ".mp3" in
+    let name_mp3   = tmp_dir ^ "/" ^ name ^ ".mp3" in
     let ffmpeg_cmd = "ffmpeg " ^ inputs ^ " -filter_complex amix=inputs=" ^ (string_of_int count) ^ ":duration=longest -ab 32k -acodec libmp3lame -f mp3 " ^ name_mp3 in begin
       if count > 1 then begin
         print_endline ffmpeg_cmd;
-        let _ = Sys.command ffmpeg_cmd in (); 
+        Sys.command ffmpeg_cmd |> ignore;
+        let mv = String.concat ~sep:" " ["mv"; "-f"; name_mp3; ratatoskr_dir ^ "output/" ^ name ^ ".mp3"] in Sys.command mv |> ignore;
         Unix.remove zip_full_path
       end;
-      let _ = Sys.command ("rm -rf " ^ tmp_dir) in ()
+      Sys.command ("rm -rf " ^ tmp_dir) |> ignore
     end
   in begin
     print_endline tmp_dir;
