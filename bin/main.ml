@@ -50,7 +50,17 @@ let encode () =
   in begin
     print_endline tmp_dir;
     Unix.mkdir_p tmp_dir;
-    Sys.readdir ratatoskr_workspace |> Array.filter ~f:(check_extension "zip") |> Array.map ~f:(Filename.concat ratatoskr_workspace) |> Array.iter ~f:inner
+    Sys.readdir ratatoskr_workspace |> Array.to_list |> List.filter ~f:(check_extension "zip") |> List.map ~f:(Filename.concat ratatoskr_workspace) |> fun files ->
+      let hd = List.hd files
+      and tl = List.tl files in
+      let _  = Option.value_map hd ~default:() ~f:inner in
+      if Option.is_some hd then
+        if Option.is_some tl then
+          "ok! reply !encode if you want to make me work more"
+        else
+          "ok!"
+      else
+        "no zip file!"
   end
 
 let check_command (message:Message.t) =
@@ -62,7 +72,7 @@ let check_command (message:Message.t) =
     match cmd with
     | "!ping"   -> Message.reply message "Pong!" >>> ignore
     | "kawaii"  -> Message.reply message "せやろ" >>> ignore
-    | "!encode" -> encode (); Message.reply message"ok !" >>> ignore
+    | "!encode" -> encode () |> Message.reply message >>> ignore
     | "!help"   -> help message >>> ignore
     | _         -> ()
 
