@@ -3,8 +3,8 @@ open Core
 let help_txt =
   let title       = "I'm ratatoskr running up and down the yggdrasill !" 
   and help_text   = "!help : show this help."
-  and ping_help   = "!ping : replied Pong!"
-  and encode_help = "!encode : encode ratatoskr/workspace/<name>.zip (included *.flac files) to a ratatoskr/output/<name>.mp3 file. And, delete all zip files."
+  and ping_help   = "!ping : reply Pong!"
+  and encode_help = "!encode : encode a ratatoskr/workspace/<name>.zip (included *.flac files) to a ratatoskr/output/<name>.mp3 file."
   in
     String.concat ~sep:"\n" [title; ping_help; encode_help; help_text]
 
@@ -51,10 +51,6 @@ let encode () =
       match List.hd files with
       | None      -> "no zip file!"
       | Some path ->
-          let _ = inner path
-          in
-            if List.tl files |> Option.is_none then "ok!"
-            else
-              "ok! reply !encode if you want to make me work more"
+          let _ = inner path in "ok!\nprocessed: " ^ Filename.basename path ^ "\nif you want to make me work more, delete processed file and re-command !encode"
   end
 
