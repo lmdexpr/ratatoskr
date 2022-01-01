@@ -19,38 +19,37 @@ let encode () =
   in
   let ratatoskr_workspace = Filename.concat ratatoskr_dir "workspace" in
 
-  let inner zip_full_path =
-    let name    = Filename.basename zip_full_path |> Filename.chop_extension in
-    let tmp_dir = Filename.concat tmp_dir name in
-    let _ = begin
-      print_endline zip_full_path;
-      print_endline tmp_dir;
-      Unix.mkdir_p tmp_dir;
-      Sys.chdir tmp_dir;
-      Sys.command ("unzip -j " ^ zip_full_path ^ " \"*.flac\"")
-    end in
-    let flacs      = Sys.readdir tmp_dir |> Array.filter ~f:(check_extension "flac") in
-    let count      = Array.length flacs in
-    let inputs     = Array.map ~f:(fun flac -> "-i " ^ flac) flacs |> String.concat_array ~sep:" " in
-    let name_mp3   = tmp_dir ^ "/" ^ name ^ ".mp3" in
-    let ffmpeg_cmd = "ffmpeg " ^ inputs ^ " -filter_complex amix=inputs=" ^ (string_of_int count) ^ ":duration=longest -ab 32k -acodec libmp3lame -f mp3 " ^ name_mp3 in
-    begin
-      if count > 1 then begin
-        print_endline ffmpeg_cmd;
-        Sys.command ffmpeg_cmd |> ignore;
-        let mv = String.concat ~sep:" " ["mv"; "-f"; name_mp3; ratatoskr_dir ^ "output/" ^ name ^ ".mp3"] in Sys.command mv |> ignore;
-        Sys.command ("rm -rf " ^ zip_full_path) |> ignore
-      end;
-      Sys.command ("rm -rf " ^ tmp_dir) |> ignore
-    end
-  in
   begin
     print_endline tmp_dir;
     Unix.mkdir_p tmp_dir;
     Sys.readdir ratatoskr_workspace |> Array.to_list |> List.filter ~f:(check_extension "zip") |> List.map ~f:(Filename.concat ratatoskr_workspace) |> fun files ->
       match List.hd files with
-      | None      -> "no zip file!"
-      | Some path ->
-          let _ = inner path in "ok!\nprocessed: " ^ Filename.basename path ^ "\nif you want to make me work more, delete processed file and re-command !encode"
+      | None               -> "no zip file!"
+      | Some zip_full_path ->
+          let file_name = Filename.basename zip_full_path in
+          let name      = Filename.chop_extension file_name in
+          let tmp_dir   = Filename.concat tmp_dir name in
+          let _ = begin
+            print_endline zip_full_path;
+            print_endline tmp_dir;
+            Unix.mkdir_p tmp_dir;
+            Sys.chdir tmp_dir;
+            Sys.command ("unzip -j " ^ zip_full_path ^ " \"*.flac\"")
+          end in
+          let flacs      = Sys.readdir tmp_dir |> Array.filter ~f:(check_extension "flac") in
+          let count      = Array.length flacs in
+          let inputs     = Array.map ~f:(fun flac -> "-i " ^ flac) flacs |> String.concat_array ~sep:" " in
+          let name_mp3   = tmp_dir ^ "/" ^ name ^ ".mp3" in
+          let ffmpeg_cmd = "ffmpeg " ^ inputs ^ " -filter_complex amix=inputs=" ^ (string_of_int count) ^ ":duration=longest -ab 32k -acodec libmp3lame -f mp3 " ^ name_mp3 in
+          let _ =
+            if count > 1 then begin
+              print_endline ffmpeg_cmd;
+              Sys.command ffmpeg_cmd |> ignore;
+              let mv = String.concat ~sep:" " ["mv"; "-f"; name_mp3; ratatoskr_dir ^ "output/" ^ name ^ ".mp3"] in Sys.command mv |> ignore;
+              Sys.command ("rm -rf " ^ zip_full_path) |> ignore
+            end;
+            Sys.command ("rm -rf " ^ tmp_dir) |> ignore
+          in
+            "ok!\nprocessed: " ^ file_name ^ "\nif you want to make me work more, delete processed file and re-command !encode"
   end
 
