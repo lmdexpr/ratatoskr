@@ -13,6 +13,7 @@ let morning_greeting = "ohayo!"
 let check_morning_greeting inp =
   let open Str in
   match split (quote inp |> regexp) morning_greeting with
+  | [ "ohayo!" ] -> None
   | [ t ] -> Some t
   | _     -> None
 
